@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <title>CareQueue | Admin Dashboard</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-box { background: #2563eb; padding: 20px; border-radius: 8px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid #334155; text-align: left; }
+        th { color: #fbbf24; }
+    </style>
+</head>
+<body>
+
+    <h2>Admin Dashboard</h2>
+    <div class="stats-grid">
+        <div class="stat-box"><h3>Bukaanka Maanta</h3><p id="totalPatients">0</p></div>
+        <div class="stat-box" style="background: #059669;"><h3>Dakhliga Maanta</h3><p id="dailyRevenue">$0</p></div>
+    </div>
+
+    <div class="card">
+        <h3>Taariikhda Bukaannada</h3>
+        <table>
+            <thead><tr><th>Magaca</th><th>Dhakhtarka</th><th>Lacagta</th><th>Taariikhda</th></tr></thead>
+            <tbody id="historyTable"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://carequeue-manager-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        db.ref('patient_history').on('value', (snap) => {
+            const data = snap.val();
+            let count = 0;
+            let revenue = 0;
+            const today = new Date().toLocaleDateString();
+            const table = document.getElementById('historyTable');
+            table.innerHTML = "";
+
+            if (data) {
+                Object.values(data).forEach(p => {
+                    if (p.date === today) {
+                        count++;
+                        revenue += parseFloat(p.fee || 0);
+                        table.innerHTML += `<tr><td>${p.name}</td><td>${p.doctor}</td><td>$${p.fee}</td><td>${p.time}</td></tr>`;
+                    }
+                });
+                document.getElementById('totalPatients').innerText = count;
+                document.getElementById('dailyRevenue').innerText = "$" + revenue;
+            }
+        });
+    </script>
+</body>
+</html>
