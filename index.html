@@ -31,5 +31,45 @@
         </table>
     </div>
 
+    <script>
+        // 1. Firebase Config (Hubi inuu la mid yahay kan Reception-ka)
+        const firebaseConfig = { 
+            databaseURL: "https://carequeue-manager-default-rtdb.firebaseio.com",
+            projectId: "carequeue-manager"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
+
+        // 2. Helitaanka taariikhda maanta si dakhliga loo xisaabiyo
+        const today = new Date().toLocaleDateString().replace(/\//g, '-');
+
+        // 3. Soo akhrinta Dakhliga Maanta
+        db.ref('daily_revenue/' + today).on('value', (snap) => {
+            let total = 0;
+            let count = 0;
+            snap.forEach((child) => {
+                total += parseFloat(child.val().amount || 0);
+                count++;
+            });
+            document.getElementById('dailyRevenue').innerText = "$" + total;
+            document.getElementById('totalPatients').innerText = count;
+        });
+
+        // 4. Soo akhrinta Taariikhda Guud ee Bukaanka
+        db.ref('patient_history').on('value', (snap) => {
+            const table = document.getElementById('historyTable');
+            table.innerHTML = "";
+            snap.forEach((child) => {
+                const data = child.val();
+                let row = `<tr>
+                    <td>${data.name}</td>
+                    <td>${data.doctor || 'N/A'}</td>
+                    <td>$${data.fee || 0}</td>
+                    <td>${data.date}</td>
+                </tr>`;
+                table.insertAdjacentHTML('afterbegin', row);
+            });
+        });
+    </script>
 </body>
 </html>
