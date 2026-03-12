@@ -19,8 +19,8 @@
 
     <h2>Admin Dashboard</h2>
     <div class="stats-grid">
-        <div class="stat-box"><h3>Bukaanka Maanta</h3><p id="totalPatients">0</p></div>
-        <div class="stat-box" style="background: #059669;"><h3>Dakhliga Maanta</h3><p id="dailyRevenue">$0</p></div>
+        <div class="stat-box"><h3>Bukaanka Maanta</h3><p id="totalPatients" style="font-size: 24px; font-weight: bold;">0</p></div>
+        <div class="stat-box" style="background: #059669;"><h3>Dakhliga Maanta</h3><p id="dailyRevenue" style="font-size: 24px; font-weight: bold;">$0</p></div>
     </div>
 
     <div class="card">
@@ -31,3 +31,52 @@
         </table>
     </div>
 
+    <script>
+        const firebaseConfig = { 
+            databaseURL: "https://carequeue-manager-default-rtdb.firebaseio.com" 
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
+
+        // Maadaama xogta maanta lagu kaydiyo 'daily_revenue/DATE', waxaan helnaa taariikhda maanta
+        const dateKey = new Date().toLocaleDateString().replace(/\//g, '-');
+
+        function loadAdminStats() {
+            // 1. Soo akhrinta dakhliga iyo bukaanka maanta
+            db.ref('daily_revenue/' + dateKey).on('value', (snap) => {
+                let totalCash = 0;
+                let patientCount = 0;
+                
+                snap.forEach((child) => {
+                    const data = child.val();
+                    totalCash += parseFloat(data.amount || 0);
+                    patientCount++;
+                });
+
+                document.getElementById('dailyRevenue').innerText = "$" + totalCash;
+                document.getElementById('totalPatients').innerText = patientCount;
+            });
+
+            // 2. Soo akhrinta Taariikhda guud (Patient History)
+            db.ref('patient_history').on('value', (snap) => {
+                const historyTable = document.getElementById('historyTable');
+                historyTable.innerHTML = "";
+                
+                snap.forEach((child) => {
+                    const item = child.val();
+                    historyTable.insertAdjacentHTML('afterbegin', `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.doctor || 'N/A'}</td>
+                            <td>$${item.fee || 0}</td>
+                            <td>${item.date} ${item.time || ''}</td>
+                        </tr>
+                    `);
+                });
+            });
+        }
+
+        loadAdminStats();
+    </script>
+</body>
+</html>
